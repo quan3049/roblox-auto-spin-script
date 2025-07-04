@@ -1,0 +1,55 @@
+loadstring([[
+local RS = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+local SpinRemote = RS:WaitForChild("Network"):WaitForChild("Spinny Wheel: Request Spin")
+local player = Players.LocalPlayer
+local spinning = true
+local Wheels = {"VoidWheel"}
+
+-- Tạo GUI nhỏ gọn
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.ResetOnSpawn = false
+
+local btn = Instance.new("TextButton")
+btn.Parent = gui
+btn.Size = UDim2.new(0, 100, 0, 36)
+btn.Position = UDim2.new(1, -110, 1, -50) -- Góc dưới phải
+btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+btn.Font = Enum.Font.GothamBold
+btn.TextSize = 16
+btn.Text = "🌀 Auto: ON"
+btn.AutoButtonColor = false
+btn.BorderSizePixel = 0
+btn.BackgroundTransparency = 0.1
+btn.ClipsDescendants = true
+btn.TextWrapped = true
+btn.TextStrokeTransparency = 0.5
+btn.ZIndex = 10
+btn.AnchorPoint = Vector2.new(0, 0)
+
+-- Làm bo góc
+local UICorner = Instance.new("UICorner", btn)
+UICorner.CornerRadius = UDim.new(0, 8)
+
+btn.MouseButton1Click:Connect(function()
+    spinning = not spinning
+    btn.Text = spinning and "🌀 Auto: ON" or "⛔ Auto: OFF"
+    btn.BackgroundColor3 = spinning and Color3.fromRGB(40, 40, 40) or Color3.fromRGB(120, 0, 0)
+end)
+
+-- Quay vòng
+task.spawn(function()
+    while true do
+        if spinning then
+            for _, Wheel in ipairs(Wheels) do
+                pcall(function()
+                    SpinRemote:InvokeServer(Wheel)
+                end)
+                task.wait(0.5)
+            end
+        end
+        task.wait(0.5)
+    end
+end)
+]])()
