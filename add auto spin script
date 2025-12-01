@@ -46,10 +46,10 @@ task.spawn(function()
                 pcall(function()
                     SpinRemote:InvokeServer(Wheel)
                 end)
-                task.wait(0.5)
+                task.wait(0.05)
             end
         end
-        task.wait(0.5)
+        task.wait(0.05)
     end
 end)
 ]])()
