@@ -1,9 +1,46 @@
 local RS = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
+local HttpService = game:GetService("HttpService") -- Thêm HttpService để gửi Webhook
 local SpinRemote = RS:WaitForChild("Network"):WaitForChild("Spinny Wheel: Request Spin")
 local player = Players.LocalPlayer
 local spinning = true
 local Wheels = {"VoidWheel"}
+
+-- ************************************
+-- CẤU HÌNH WEBHOOK
+-- ************************************
+local WEBHOOK_URL = "https://discord.com/api/webhooks/1439291451128156332/2JPhT-hkcEhsHdMOI5ffz80wm_040eWOeg7aY636V_R0oIG8XSuCbJPjKRqFMY1SDJ2X" -- !!! THAY THẾ URL CỦA BẠN VÀO ĐÂY !!!
+local WEBHOOK_ENABLED = true
+local BOT_NAME = "Auto Spinner Bot"
+
+-- Hàm gửi thông báo Webhook
+local function sendWebhookNotification(message, color)
+    if not WEBHOOK_ENABLED or WEBHOOK_URL == "" then return end
+
+    local payload = {
+        username = BOT_NAME,
+        avatar_url = "https://placehold.co/64x64/2ecc71/white?text=S", -- Placeholder image
+        embeds = {
+            {
+                title = ":cyclone: Yêu Cầu Quay Vòng Đã Gửi",
+                description = message,
+                color = color or 5066917, -- Màu xanh lục (Green)
+                footer = {
+                    text = "Người chơi: " .. player.Name,
+                    icon_url = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. player.UserId .. "&width=420&height=420&format=png"
+                },
+                timestamp = DateTime.now():ToIsoDate()
+            }
+        }
+    }
+
+    local json_data = HttpService:JSONEncode(payload)
+    
+    -- Gửi POST request (sử dụng pcall để tránh lỗi script nếu request thất bại)
+    pcall(function()
+        HttpService:PostAsync(WEBHOOK_URL, json_data, Enum.HttpContentType.ApplicationJson)
+    end)
+end
 
 -- Tạo GUI nhỏ gọn
 local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
@@ -17,7 +54,7 @@ btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 btn.TextColor3 = Color3.fromRGB(255, 255, 255)
 btn.Font = Enum.Font.GothamBold
 btn.TextSize = 16
-btn.Text = " Auto: ON"
+btn.Text = ":cyclone:\n Auto: ON"
 btn.AutoButtonColor = false
 btn.BorderSizePixel = 0
 btn.BackgroundTransparency = 0.1
@@ -33,60 +70,30 @@ UICorner.CornerRadius = UDim.new(0, 8)
 
 btn.MouseButton1Click:Connect(function()
     spinning = not spinning
-    btn.Text = spinning and " Auto: ON" or " Auto: OFF"
+    btn.Text = spinning and ":cyclone:\n Auto: ON" or ":no_entry:\n Auto: OFF"
     btn.BackgroundColor3 = spinning and Color3.fromRGB(40, 40, 40) or Color3.fromRGB(120, 0, 0)
+    
+    -- Gửi thông báo Webhook khi trạng thái thay đổi
+    local statusMsg = spinning and ":white_check_mark: Auto Spinner **ĐÃ BẬT**." or ":octagonal_sign: Auto Spinner **ĐÃ TẮT**."
+    local color = spinning and 5066917 or 12582912 -- Xanh hoặc Đỏ
+    sendWebhookNotification(statusMsg, color)
 end)
-
--- ************************************
--- PHẦN MÃ MỚI: Xóa UI Vòng Quay
--- ************************************
-
-local function destroyWheelUI()
-    local playerGui = player:FindFirstChild("PlayerGui")
-    if not playerGui then return end
-
-    -- Danh sách các tên phổ biến mà UI vòng quay có thể sử dụng (thường là ScreenGui hoặc Frame)
-    local potentialUI_Names = {
-        "SpinnyWheelUI",  -- Tên chung
-        "VoidWheelFrame", -- UI cụ thể của Void Wheel
-        "WheelGUI",
-        "RewardPopup",    -- Màn hình hiện thưởng
-        "ScreenGui"       -- Có thể là tên mặc định nếu dev lười đặt tên
-    }
-
-    -- Lặp qua các tên tiềm năng để tìm và xóa
-    for _, name in ipairs(potentialUI_Names) do
-        -- Tìm kiếm đệ quy (true) để tìm trong các thư mục con
-        local ui = playerGui:FindFirstChild(name, true) 
-        
-        -- Đảm bảo đây là một phần tử UI có thể xóa (ScreenGui, Frame, TextLabel, ImageLabel, ...)
-        if ui and (ui:IsA("ScreenGui") or ui:IsA("Frame") or ui:IsA("ImageLabel") or ui:IsA("TextLabel")) then
-            ui:Destroy()
-            -- print("Đã xóa UI:", name) -- Bỏ comment nếu muốn debug
-        end
-    end
-end
 
 -- Quay vòng
 task.spawn(function()
+    sendWebhookNotification(":white_check_mark: Auto Spinner đã khởi động và đang chờ quay.", 5066917) -- Thông báo khởi động
     while true do
         if spinning then
             for _, Wheel in ipairs(Wheels) do
                 pcall(function()
-                    -- Gửi yêu cầu quay vòng lên Server
                     SpinRemote:InvokeServer(Wheel)
+                    
+                    -- Gửi thông báo Webhook sau khi gửi lệnh quay thành công
+                    sendWebhookNotification("Đã gửi yêu cầu quay vòng: **" .. Wheel .. "**.", 3447003) -- Màu xanh dương
                 end)
-                
-                -- GỌI HÀM XÓA UI NGAY LẬP TỨC SAU KHI GỬI LỆNH QUAY
-                destroyWheelUI() 
-                
-                task.wait(0.05) -- Độ trễ giữa các lần quay
+                task.wait(0.05)
             end
         end
-        
-        -- Gọi lại hàm xóa UI ở cuối vòng lặp chính để đảm bảo không có UI nào bị sót
-        destroyWheelUI()
-
-        task.wait(0.05) -- Độ trễ của vòng lặp chính
+        task.wait(0.05)
     end
 end)
