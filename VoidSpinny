@@ -18,7 +18,8 @@ btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 btn.TextColor3 = Color3.fromRGB(255, 255, 255)
 btn.Font = Enum.Font.GothamBold
 btn.TextSize = 16
-btn.Text = "🌀 Auto: ON"
+btn.Text = "🌀
+ Auto: ON"
 btn.AutoButtonColor = false
 btn.BorderSizePixel = 0
 btn.BackgroundTransparency = 0.1
@@ -34,7 +35,9 @@ UICorner.CornerRadius = UDim.new(0, 8)
 
 btn.MouseButton1Click:Connect(function()
     spinning = not spinning
-    btn.Text = spinning and "🌀 Auto: ON" or "⛔ Auto: OFF"
+    btn.Text = spinning and "🌀
+ Auto: ON" or "⛔
+ Auto: OFF"
     btn.BackgroundColor3 = spinning and Color3.fromRGB(40, 40, 40) or Color3.fromRGB(120, 0, 0)
 end)
 
@@ -46,10 +49,10 @@ task.spawn(function()
                 pcall(function()
                     SpinRemote:InvokeServer(Wheel)
                 end)
-                task.wait(0.2)
+                task.wait(0.05) -- <--- ĐÃ ĐỔI THÀNH 0.05
             end
         end
-        task.wait(0.2)
+        task.wait(0.05) -- <--- ĐÃ ĐỔI THÀNH 0.05
     end
 end)
 ]])()
